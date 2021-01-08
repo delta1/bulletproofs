@@ -1,0 +1,56 @@
+on:
+  push:
+  pull_request:
+    types: [opened]
+
+name: Test
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      # - name: dependencies
+      #   run: |
+      #     sudo apt-get update && \
+      #     sudo apt-get -y install \
+      #       openssl \
+      #       libssl-dev \
+      #       pkg-config \
+      #       libsqlite3-dev \
+      #       git \
+      #       cmake \
+      #       zip \
+      #       libc++-dev \
+      #       libc++abi-dev \
+      #       libprotobuf-dev \
+      #       protobuf-compiler
+
+      - name: toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2020-06-10
+          components: clippy, rustfmt
+          override: true
+
+      - name: cargo fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+      # run cargo bench with a filter that matches no benchmarks.
+      # this ensures the benchmarks build but doesn't run them on the CI server.
+      - name: cargo bench build
+        uses: actions-rs/cargo@v1
+        with:
+          command: bench
+          args: EXTRA_FLAGS='"DONTRUNBENCHMARKS"'
